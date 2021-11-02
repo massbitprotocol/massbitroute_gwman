@@ -1,0 +1,46 @@
+solana-mainnet => {
+                map => generic-map
+                dcmap => {
+                    Ha-Noi => [
+		       34.126.181.168
+                    ]
+                    HCM => [
+		       34.126.181.168
+                    ]
+                }
+            }
+solana-testnet => {
+                map => generic-map
+                dcmap => {
+                    Ha-Noi => [
+		       34.126.181.168
+                    ]
+                    HCM => [
+		       34.126.181.168
+                    ]
+                }
+            }
+solana-devnet => {
+                map => generic-map
+                dcmap => {
+                    Ha-Noi => [
+		       34.126.181.168
+                    ]
+                    HCM => [
+		       34.126.181.168
+                    ]
+                }
+            }
+ generic-resource  => {
+                map => generic-map
+                dcmap => {
+                    Ha-Noi => [
+		       34.126.181.168
+
+                    ]
+                    HCM => [
+		       34.126.181.168
+                    ]
+                }
+            }
+
