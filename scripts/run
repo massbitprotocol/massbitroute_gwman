@@ -1,0 +1,47 @@
+#!/bin/bash
+export HOME=/massbit/massbitroute/app/src/tmp
+ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
+GDNSD_VERSION=v3.8.0
+GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
+
+_git_config() {
+	git config --global user.name "Vu Tran"
+	git config --global user.email "baysao@gmail.com"
+
+	# 	cat >$HOME/.gitconfig <<EOF
+	# [user]
+	# 	email = baysao@gmail.com
+	# 	name = Vu Tran
+	# EOF
+}
+_reload() {
+	_SITE_ROOT_=$1
+	$GDNSD_DIR/sbin/gdnsd -c $_SITE_ROOT_ checkconf
+	if [ $? -eq 0 ]; then
+		$GDNSD_DIR/bin/gdnsdctl -c $_SITE_ROOT_ replace
+	fi
+
+}
+
+_pull() {
+	dir=$1
+	cd $dir
+	git pull | grep -i "updating"
+	if [ $? -eq 0 ]; then
+		_reload $dir
+	fi
+}
+_service_gdnsd() {
+	apt install -y liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
+	_SITE_ROOT_=$1
+	mkdir -p $_SITE_ROOT_/run/dns
+	exec $GDNSD_DIR/sbin/gdnsd -c $_SITE_ROOT_ -RD start
+}
+loop() {
+	while true; do
+		$@
+		sleep 1
+	done
+
+}
+$@
