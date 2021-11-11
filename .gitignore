@@ -1,3 +1,2 @@
-run/
-config
-geoip/*
+run
+logs

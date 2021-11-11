@@ -1,0 +1,10 @@
+bsc-mainnet => {
+map => generic-map
+dcmap => {
+HCM => [
+34.126.181.168
+]
+Ha-Noi => [
+34.126.181.168
+]
+}}

@@ -25,16 +25,28 @@ ns1 A 34.126.176.201
 ns2 A 34.126.181.168
 
 
-*.stats		DYNA	geoip!solana-mainnet
-stats		DYNA	geoip!solana-mainnet
+*.stats		DYNA	geoip!generic-resource
+stats		DYNA	geoip!generic-resource
 
-*.sol-mainnet		DYNA	geoip!solana-mainnet
-*.sol-testnet		DYNA	geoip!solana-testnet
-*.sol-devnet		DYNA	geoip!solana-devnet
+*.sol-mainnet		DYNA	geoip!sol-mainnet
+*.sol-testnet		DYNA	geoip!sol-testnet
+*.sol-devnet		DYNA	geoip!sol-devnet
 
-node01-sol-mainnet		DYNA	geoip!solana-mainnet
-node01-sol-testnet		DYNA	geoip!solana-testnet
-node01-sol-devnet		DYNA	geoip!solana-devnet
+*.eth-mainnet		DYNA	geoip!eth-mainnet
+*.eth-testnet		DYNA	geoip!eth-testnet
+*.eth-devnet		DYNA	geoip!eth-devnet
+
+*.bsc-mainnet		DYNA	geoip!bsc-mainnet
+*.bsc-testnet		DYNA	geoip!bsc-testnet
+*.bsc-devnet		DYNA	geoip!bsc-devnet
+
+*.btc-mainnet		DYNA	geoip!btc-mainnet
+*.btc-testnet		DYNA	geoip!btc-testnet
+*.btc-devnet		DYNA	geoip!btc-devnet
+
+node01-sol-mainnet		DYNA	geoip!sol-mainnet
+node01-sol-testnet		DYNA	geoip!sol-testnet
+node01-sol-devnet		DYNA	geoip!sol-devnet
 
 admin A 34.126.181.168
 api A 34.126.181.168
@@ -52,6 +64,9 @@ _acme-challenge.bsc-testnet CNAME 13b4f378-4e60-44eb-9df7-4bac24c33a6d.auth.acme
 _acme-challenge.bsc-mainnet CNAME f396d0f5-9981-4de6-9e38-d70c72dde55e.auth.acme-dns.io.
 _acme-challenge.mbr CNAME db454191-8449-4630-850b-a4d7a019eb66.auth.acme-dns.io.
 _acme-challenge.gw.mbr CNAME 8d3baf1b-59ba-476d-9c18-c2a687ef97f5.auth.acme-dns.io.
+_acme-challenge.node.mbr CNAME 16afdbc1-684d-4d8c-aa60-14690a308ec0.auth.acme-dns.io.
+_acme-challenge.dapi CNAME e30341dd-016b-4d08-948f-7c19a339f445.auth.acme-dns.io.
+
 @ A 34.126.176.201
 * A 34.126.176.201
 @ 3600 IN MX 5 gmr-smtp-in.l.google.com.
@@ -74,3 +89,7 @@ z2._gw._mbr._tcp      SRV 0 0 443 z2-0.gw.mbr
 z2._gw._mbr._tcp      SRV 0 0 443 z2-1.gw.mbr
 z1._gw._mbr._tcp      TXT "path=/"
 z2._gw._mbr._tcp      TXT "path=/"
+2fa53c610897a904665f8be56e410d63.gw.mbr 600 A 34.88.243.5
+c4a2732c042af2dadb6a7dde7c31cc2c.gw.mbr 600 A 34.88.231.165
+1cc455dfb14477dea446e76c1d8bfae3.node.mbr 600 A 34.88.61.112
+739becd7a3030642a8f734e61a60f3bc.node.mbr 600 A 34.88.161.189
