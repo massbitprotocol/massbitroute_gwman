@@ -23,14 +23,36 @@ _reload() {
 
 }
 
+_rebuild_zone() {
+	dir=$1
+	cd $dir
+
+	tmp=$(mktemp)
+	cat data/zones/massbitroute.com >$tmp
+	ls data/zones/node_*.zone data/zones/gateway_*.zone | while read f; do
+		cat $f >>$tmp
+		echo >>$tmp
+	done
+	cat $tmp >zones/massbitroute.com
+	rm $tmp
+}
 _pull() {
 	dir=$1
 	cd $dir
 	git pull | grep -i "updating"
 	if [ $? -eq 0 ]; then
-		_reload $dir
+
+		_rebuild_zone $dir
+		$0 _reload $dir
 	fi
+	# check if prometheus conf is updated
+	# git diff --exit-code $dir/etc/prometheus/stat.yml
+	# if [ $? -ne 0 ]; then
+	# 	$cmd_server restart prometheus
+	# fi
+
 }
+
 _service_grafana() {
 	SITE_ROOT=$1
 	mkdir -p _SITE_ROOT_/data/grafana
