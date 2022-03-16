@@ -9,11 +9,43 @@ type=gwman
 service_dir=/massbit/massbitroute/app/src/sites/services
 cmd=$SITE_ROOT/cmd_server
 cd $SITE_ROOT
+_add_cron() {
+	cat <<EOF >/tmp/crontab
+0 0 * * * $SITE_ROOT/scripts/run _update_ssl
+EOF
+	crontab /tmp/crontab
+}
 _git_config() {
 	git config --global user.name "Vu Tran"
 	git config --global user.email "baysao@gmail.com"
 }
+_rebuild_conf() {
+	_dir=$SITE_ROOT/data/zones
+	_file_ok=$SITE_ROOT/zones/$DOMAIN
+	_file=$(mktemp)
+	cat $_dir/$DOMAIN >$_file
+	echo >>$_file
+
+	find $_dir/dapi -type f -iname '*.zone' | while read f; do
+		cat $f >>$_file
+		echo >>$_file
+	done
+
+	find $_dir/gateway -type f -iname '*.zone' | while read f; do
+		cat $f >>$_file
+		echo >>$_file
+	done
+
+	find $_dir/node -type f -iname '*.zone' | while read f; do
+		cat $f >>$_file
+		echo >>$_file
+	done
+
+	mv $_file $_file_ok
+}
 _reload() {
+	#_update_ssl
+	_rebuild_conf
 	$GDNSD_DIR/sbin/gdnsd -c $SITE_ROOT checkconf
 	if [ $? -eq 0 ]; then
 		$GDNSD_DIR/bin/gdnsdctl -c $SITE_ROOT replace
@@ -84,35 +116,11 @@ _update_ssl() {
 	$git_ssl commit -m update
 	$git_ssl push origin master
 }
-_rebuild_conf() {
-	_dir=$SITE_ROOT/data/zones
-	_file_ok=$SITE_ROOT/zones/$DOMAIN
-	_file=$(mktemp)
-	cat $_dir/$DOMAIN >$_file
-	echo >>$_file
-
-	find $_dir/dapi -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
-
-	find $_dir/gateway -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
-
-	find $_dir/node -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
-
-	mv $_file $_file_ok
-}
 
 _monitor() {
+	_add_cron
 	# renew ssl
-	_update_ssl
-	_rebuild_conf
+
 	# check change on git
 	is_reload=0
 	git -C $SITE_ROOT pull origin master | grep -i "updating"
