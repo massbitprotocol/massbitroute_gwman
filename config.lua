@@ -9,9 +9,8 @@ local _config = {
     templates = {},
     apps = {},
     supervisor = [[
-
-[program:gwman_pull]
-command=/bin/bash _SITE_ROOT_/scripts/run loop _pull _SITE_ROOT_ v1
+[program:gwman_monitor]
+command=/bin/bash _SITE_ROOT_/scripts/run loop _monitor _SITE_ROOT_ v1
 autorestart=true
 redirect_stderr=true
 stdout_logfile=_SITE_ROOT_/logs/gwman_pull.log
@@ -22,8 +21,6 @@ command=/bin/bash _SITE_ROOT_/scripts/run loop _service_gdnsd _SITE_ROOT_ v1
 autorestart=true
 redirect_stderr=true
 stdout_logfile=_SITE_ROOT_/logs/gwman_gdnsd.log
-
-
     ]]
 }
 return _config
