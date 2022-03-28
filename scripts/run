@@ -87,7 +87,7 @@ _reload() {
 
 _install() {
 	mkdir -p $service_dir $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
-	
+
 	service=ssl
 	dest=/etc/letsencrypt
 	if [ -d "$dest" ]; then
@@ -124,7 +124,7 @@ _install() {
 	else
 	  git clone $giturl $gitdir
 	fi
-  sudo sed 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/data/${DOMAIN}
+  sudo sed 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/data/zones/${DOMAIN}
 
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
@@ -157,9 +157,9 @@ _update_ssl() {
 }
 
 _monitor() {
-	_add_cron
 	# renew ssl
-
+	_add_cron
+  _rebuild_conf
 	# check change on git
 	is_reload=0
 	git -C $SITE_ROOT pull origin master | grep -i "updating"
