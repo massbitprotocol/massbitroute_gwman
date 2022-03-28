@@ -12,7 +12,7 @@ if [ "x$ENV" == "x" ]; then
 else
   source $SITE_ROOT/.env.${ENV}
 fi
-
+auth=$GIT_READ
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
@@ -124,8 +124,8 @@ _install() {
 	else
 	  git clone $giturl $gitdir
 	fi
-  sudo sed -i 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/zones/${DOMAIN}
-	
+  sudo sed -i 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/data/${DOMAIN}
+
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
 	apt-get update
