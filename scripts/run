@@ -1,7 +1,18 @@
 #!/bin/bash
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
 export HOME=$SITE_ROOT/tmp
-. $SITE_ROOT/.env
+GITHUB_TRIES=5
+VAR=$SITE_ROOT/vars
+if [ ! -d "$VAR" ]; then
+	mkdir $VAR
+fi
+ENV=$(cat $VAR/ENV)
+if [ "x$ENV" == "x" ]; then
+  source $SITE_ROOT/.env
+else
+  source $SITE_ROOT/.env.${ENV}
+fi
+
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
@@ -18,6 +29,27 @@ EOF
 _git_config() {
 	git config --global user.name "Vu Tran"
 	git config --global user.email "baysao@gmail.com"
+}
+_gitclone() {
+  repo=$1
+  dest=$2
+  shift 2
+  rem="$@"
+  cmd="git clone $repo $dest $rem"
+  $cmd
+  st=$?
+  i=0
+  while [ \( $i -lt $GITHUB_TRIES \) -a \( $st -ne 0 \) ]; do
+    echo "Can not clone code from github $repo. Retrying ${i}th ... !"
+    $cmd
+    st=$?
+    i=$((i + 1))
+  done
+  if [ $st -ne 0 ]; then
+    echo "Can not clone code from github $repo after $GITHUB_TRIES tries!"
+    exit 1
+  fi
+  git -C $dest remote set-url origin $repo
 }
 _rebuild_conf() {
 	_dir=$SITE_ROOT/data/zones
@@ -55,38 +87,45 @@ _reload() {
 
 _install() {
 	mkdir -p $service_dir $SITE_ROOT/etc
-	user=massbit
-	pass=41d919e74993945a97972d147c4d01847e8bc1b6
-
-	# git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/$service
-	# git -C /massbit/massbitroute/app/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
 
 	service=gbc
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/$service
-	git -C /massbit/massbitroute/app/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
+	dest=/massbit/massbitroute/app/$service
+	if [ -d "$dest" ]; then
+	  rm -rf $dest
+	fi
+	_gitclone https://github.com/massbitprotocol/massbitroute_gbc  $dest
 
-	service=asdf
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/gbc/bin/.asdf
-
-	git -C /massbit/massbitroute/app/gbc/bin/.asdf remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=mkagent
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git $SITE_ROOT/etc/$service
-
-	git -C $SITE_ROOT/etc/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
+	asdfdest=/massbit/massbitroute/app/gbc/bin/.asdf
+	if [ -d "$asdfdest" ]; then
+	  rm -rf $asdfdest
+	fi
+	_gitclone https://github.com/massbitprotocol/massbitroute_asdf  $asdfdest
 
 	service=ssl
-	user=$service
-	pass=adf7caa9e1bbe306c31c98fdf690e9f645feee14
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /etc/letsencrypt
-	git -C /etc/letsencrypt remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
+	dest=/etc/letsencrypt/$service
+	if [ -d "$dest" ]; then
+	  rm -rf $dest
+	fi
+	_gitclone https://$auth@git.${DOMAIN}/massbitroute/${service}.git  $dest
+
+	service=mkagent
+	dest=$SITE_ROOT/etc/$service
+	if [ -d "$dest" ]; then
+	  rm -rf $dest
+	fi
+	_gitclone https://github.com/massbitprotocol/massbitroute_mkagent  $dest
 
 	service=$type
-	user=$service
-	pass=067b14c85441fc9381d3425e1c9ed1dbc70017f2
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git $service_dir/$service
-	git -C $service_dir/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
+	gitdir=$service_dir/$service
+	giturl=https://github.com/massbitprotocol/massbitroute_${service}
+	if [ -d "$gitdir" ]; then
+	  git -C $gitdir remote set-url origin $giturl
+	  git -C $gitdir pull
+	else
+	  git clone $giturl $gitdir
+	fi
+  sudo sed -i 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/zones/${DOMAIN}
+	
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
 	apt-get update
