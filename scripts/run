@@ -86,7 +86,14 @@ _reload() {
 }
 
 _install() {
-	mkdir -p $service_dir $SITE_ROOT/etc
+	mkdir -p $service_dir $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
+	
+	service=ssl
+	dest=/etc/letsencrypt
+	if [ -d "$dest" ]; then
+	  rm -rf $dest
+	fi
+	_gitclone https://$auth@git.${DOMAIN}/massbitroute/${service}.git  $dest
 
 	service=gbc
 	dest=/massbit/massbitroute/app/$service
@@ -100,13 +107,6 @@ _install() {
 	  rm -rf $asdfdest
 	fi
 	_gitclone https://github.com/massbitprotocol/massbitroute_asdf  $asdfdest
-
-	service=ssl
-	dest=/etc/letsencrypt/$service
-	if [ -d "$dest" ]; then
-	  rm -rf $dest
-	fi
-	_gitclone https://$auth@git.${DOMAIN}/massbitroute/${service}.git  $dest
 
 	service=mkagent
 	dest=$SITE_ROOT/etc/$service
@@ -124,7 +124,7 @@ _install() {
 	else
 	  git clone $giturl $gitdir
 	fi
-  sudo sed -i 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/data/${DOMAIN}
+  sudo sed 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl > $service_dir/$service/data/${DOMAIN}
 
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
