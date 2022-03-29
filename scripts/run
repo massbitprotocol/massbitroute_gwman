@@ -1,12 +1,11 @@
 #!/bin/bash
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
-
-ROOT_DIR=$SITE_ROOT
-cd $SITE_ROOT
-source $SITE_ROOT/bin/shell_func.sh
-loadEnv $SITE_ROOT
-source $SITE_ROOT/scripts/base.sh
 export HOME=$SITE_ROOT
+ROOT_DIR=$SITE_ROOT
+
+source $SITE_ROOT/scripts/base.sh
+cd $SITE_ROOT
+_load_env $SITE_ROOT
 
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
@@ -59,20 +58,23 @@ _reload() {
 	$SITE_ROOT/cmd_server _update
 }
 
-
 _git_cmd() {
 	_cmd=$1
 	_url=$2
 	_dir=$3
-	_branch=$MBR_ENV
+	_branch=$4
+	if [ -z "$_branch" ]; then _branch=$MBR_ENV; fi
 	st=0
 	if [ "$_cmd" = "clone" ]; then
 		# if [ -d "$_dir" ]; then rm -rf $_dir; fi
 		mkdir -p $_dir
 		git clone $_url $_dir -b $_branch
+		git -C $_dir checkout $_branch
 		git -C $_dir branch --set-upstream-to origin/$_branch
 		git -C $_dir pull origin $_branch
+
 	else
+		git -C $_dir checkout $_branch
 		git -C $_dir pull origin $_branch
 		st=$?
 	fi
@@ -90,9 +92,9 @@ _get_status_cmd() {
 _install_repos() {
 	_git_config
 	ret=0
-	_get_status_cmd $ret _git_cmd clone $GIT_PRIVATE_URL/massbitroute/ssl.git /etc/letsencrypt
+	_get_status_cmd $ret _git_cmd clone $GIT_PRIVATE_URL/massbitroute/ssl.git /etc/letsencrypt master
 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc /massbit/massbitroute/app/gbc
-	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf /massbit/massbitroute/app/gbc/bin/.asdf
+	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf /massbit/massbitroute/app/gbc/bin/.asdf master
 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent $SITE_ROOT/etc/mkagent
 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman $SITE_ROOT
 }
@@ -136,7 +138,7 @@ _update_ssl() {
 _monitor() {
 	# renew ssl
 	_add_cron
-  _rebuild_conf
+	_rebuild_conf
 	# check change on git
 	is_reload=0
 	git -C $SITE_ROOT pull origin master | grep -i "updating"
@@ -156,7 +158,6 @@ _service_gdnsd() {
 	mkdir -p $SITE_ROOT/run/dns
 	exec $GDNSD_DIR/sbin/gdnsd -c $SITE_ROOT -RD start
 }
-
 
 _run() {
 	rm -rf $SITE_ROOT/tmp/*
