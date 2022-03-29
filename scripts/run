@@ -1,13 +1,18 @@
 #!/bin/bash
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
-export HOME=$SITE_ROOT/tmp
-. $SITE_ROOT/.env
+export HOME=$SITE_ROOT
+ROOT_DIR=$SITE_ROOT
+
+source $SITE_ROOT/scripts/base.sh
+cd $SITE_ROOT
+_load_env $SITE_ROOT
+
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
-type=gwman
-service_dir=/massbit/massbitroute/app/src/sites/services
-cmd=$SITE_ROOT/cmd_server
+TYPE=gwman
+# service_dir=/massbit/massbitroute/app/src/sites/services
+# cmd_server=$SITE_ROOT/cmd_server
 cd $SITE_ROOT
 _add_cron() {
 	cat <<EOF >/tmp/crontab
@@ -15,10 +20,7 @@ _add_cron() {
 EOF
 	crontab /tmp/crontab
 }
-_git_config() {
-	git config --global user.name "Vu Tran"
-	git config --global user.email "baysao@gmail.com"
-}
+
 _rebuild_conf() {
 	_dir=$SITE_ROOT/data/zones
 	_file_ok=$SITE_ROOT/zones/$DOMAIN
@@ -43,49 +45,65 @@ _rebuild_conf() {
 
 	mv $_file $_file_ok
 }
-_reload() {
-	#_update_ssl
-	_rebuild_conf
+_reload_gdnsd() {
 	$GDNSD_DIR/sbin/gdnsd -c $SITE_ROOT checkconf
 	if [ $? -eq 0 ]; then
 		$GDNSD_DIR/bin/gdnsdctl -c $SITE_ROOT replace
 	fi
-	$cmd _update
+}
+_reload() {
+	_add_cron
+	_rebuild_conf
+	_reload_gdnsd
+	$SITE_ROOT/cmd_server _update
+}
+
+_git_cmd() {
+	_cmd=$1
+	_url=$2
+	_dir=$3
+	_branch=$4
+	if [ -z "$_branch" ]; then _branch=$MBR_ENV; fi
+	st=0
+	if [ "$_cmd" = "clone" ]; then
+		# if [ -d "$_dir" ]; then rm -rf $_dir; fi
+		mkdir -p $_dir
+		git clone $_url $_dir -b $_branch
+		git -C $_dir checkout $_branch
+		git -C $_dir branch --set-upstream-to origin/$_branch
+		git -C $_dir pull origin $_branch
+
+	else
+		git -C $_dir checkout $_branch
+		git -C $_dir pull origin $_branch
+		st=$?
+	fi
+	return $st
+}
+
+_get_status_cmd() {
+	_ret=$1
+	shift
+	$@
+	st=$?
+	if [ $st -ne 0 ]; then _ret=$st; fi
+	return $_ret
+}
+_install_repos() {
+	_git_config
+	ret=0
+	_get_status_cmd $ret _git_cmd clone $GIT_PRIVATE_URL/massbitroute/ssl.git /etc/letsencrypt master
+	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc /massbit/massbitroute/app/gbc
+	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf /massbit/massbitroute/app/gbc/bin/.asdf master
+	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent $SITE_ROOT/etc/mkagent
+	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman $SITE_ROOT
 }
 
 _install() {
-	mkdir -p $service_dir $SITE_ROOT/etc
-	user=massbit
-	pass=41d919e74993945a97972d147c4d01847e8bc1b6
-
-	# git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/$service
-	# git -C /massbit/massbitroute/app/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=gbc
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/$service
-	git -C /massbit/massbitroute/app/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=asdf
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /massbit/massbitroute/app/gbc/bin/.asdf
-
-	git -C /massbit/massbitroute/app/gbc/bin/.asdf remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=mkagent
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git $SITE_ROOT/etc/$service
-
-	git -C $SITE_ROOT/etc/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=ssl
-	user=$service
-	pass=adf7caa9e1bbe306c31c98fdf690e9f645feee14
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git /etc/letsencrypt
-	git -C /etc/letsencrypt remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
-
-	service=$type
-	user=$service
-	pass=067b14c85441fc9381d3425e1c9ed1dbc70017f2
-	git clone http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git $service_dir/$service
-	git -C $service_dir/$service remote set-url origin http://$user:$pass@git.massbitroute.com/massbitroute/${service}.git
+	mkdir -p $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
+	_install_repo
+	mkdir -p $SITE_ROOT/data/zones
+	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
 
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
@@ -93,7 +111,7 @@ _install() {
 	apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
 		liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
 
-	cp supervisor.conf /etc/supervisor/conf.d/${type}.conf
+	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
 
 	for svr in systemd-resolved; do
 		systemctl disable $svr
@@ -105,7 +123,7 @@ _install() {
 		systemctl start $svr
 	done
 
-	supervisorctl update
+	# supervisorctl update
 }
 
 _update_ssl() {
@@ -118,9 +136,9 @@ _update_ssl() {
 }
 
 _monitor() {
-	_add_cron
 	# renew ssl
-
+	_add_cron
+	_rebuild_conf
 	# check change on git
 	is_reload=0
 	git -C $SITE_ROOT pull origin master | grep -i "updating"
@@ -134,33 +152,17 @@ _monitor() {
 	fi
 }
 
-_service_grafana() {
-	mkdir -p $SITE_ROOT/data/grafana
-	GRAFANA_DIR=$SITE_ROOT/bin/grafana/$GRAFANA_VERSION
-	exec $GRAFANA_DIR/bin/grafana-server -config $SITE_ROOT/etc/grafana/stat.ini -homepath $GRAFANA_DIR
-}
-
-_service_prometheus() {
-	mkdir -p $SITE_ROOT/data/prometheus
-	PROMETHEUS_DIR=$SITE_ROOT/bin/prometheus/$PROMETHEUS_VERSION
-	exec $PROMETHEUS_DIR/bin/prometheus --web.enable-admin-api --config.file=$SITE_ROOT/etc/prometheus/stat.yml --web.listen-address="127.0.0.1:44449" --web.external-url http://127.0.0.1:44449/__internal_prometheus --web.enable-lifecycle --storage.tsdb.path $SITE_ROOT/data/prometheus
-}
-
 _service_gdnsd() {
 	# apt install -y liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
+
 	mkdir -p $SITE_ROOT/run/dns
 	exec $GDNSD_DIR/sbin/gdnsd -c $SITE_ROOT -RD start
 }
+
 _run() {
 	rm -rf $SITE_ROOT/tmp/*
 	sleep 3
 	$SITE_ROOT/start_server
 }
-loop() {
-	while true; do
-		$@
-		sleep 3
-	done
 
-}
 $@
