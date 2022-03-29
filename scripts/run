@@ -1,5 +1,6 @@
 #!/bin/bash
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
+
 ROOT_DIR=$SITE_ROOT
 cd $SITE_ROOT
 source $SITE_ROOT/bin/shell_func.sh
@@ -7,19 +8,6 @@ loadEnv $SITE_ROOT
 source $SITE_ROOT/scripts/base.sh
 export HOME=$SITE_ROOT
 
-# export HOME=$SITE_ROOT/tmp
-# GITHUB_TRIES=5
-# VAR=$SITE_ROOT/vars
-# if [ ! -d "$VAR" ]; then
-# 	mkdir $VAR
-# fi
-# ENV=$(cat $VAR/ENV)
-# if [ "x$ENV" == "x" ]; then
-# 	source $SITE_ROOT/.env
-# else
-# 	source $SITE_ROOT/.env.${ENV}
-# fi
-#auth=$GIT_READ
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
@@ -33,31 +21,7 @@ _add_cron() {
 EOF
 	crontab /tmp/crontab
 }
-# _git_config() {
-# 	git config --global user.name "Vu Tran"
-# 	git config --global user.email "baysao@gmail.com"
-# }
-# _gitclone() {
-# 	repo=$1
-# 	dest=$2
-# 	shift 2
-# 	rem="$@"
-# 	cmd="git clone $repo $dest $rem"
-# 	$cmd
-# 	st=$?
-# 	i=0
-# 	while [ \( $i -lt $GITHUB_TRIES \) -a \( $st -ne 0 \) ]; do
-# 		echo "Can not clone code from github $repo. Retrying ${i}th ... !"
-# 		$cmd
-# 		st=$?
-# 		i=$((i + 1))
-# 	done
-# 	if [ $st -ne 0 ]; then
-# 		echo "Can not clone code from github $repo after $GITHUB_TRIES tries!"
-# 		exit 1
-# 	fi
-# 	git -C $dest remote set-url origin $repo
-# }
+
 _rebuild_conf() {
 	_dir=$SITE_ROOT/data/zones
 	_file_ok=$SITE_ROOT/zones/$DOMAIN
@@ -94,6 +58,7 @@ _reload() {
 	_reload_gdnsd
 	$SITE_ROOT/cmd_server _update
 }
+
 
 _git_cmd() {
 	_cmd=$1
@@ -138,44 +103,6 @@ _install() {
 	mkdir -p $SITE_ROOT/data/zones
 	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
 
-	# service=ssl
-	# dest=/etc/letsencrypt
-	# if [ -d "$dest" ]; then
-	# 	rm -rf $dest
-	# fi
-	# _gitclone https://$auth@git.${DOMAIN}/massbitroute/ssl.git /etc/letsencrypt
-
-	# service=gbc
-	# dest=/massbit/massbitroute/app/$service
-	# if [ -d "$dest" ]; then
-	# 	rm -rf $dest
-	# fi
-	# _gitclone https://github.com/massbitprotocol/massbitroute_gbc $dest
-
-	# asdfdest=/massbit/massbitroute/app/gbc/bin/.asdf
-	# if [ -d "$asdfdest" ]; then
-	# 	rm -rf $asdfdest
-	# fi
-	# _gitclone https://github.com/massbitprotocol/massbitroute_asdf $asdfdest
-
-	# service=mkagent
-	# dest=$SITE_ROOT/etc/$service
-	# if [ -d "$dest" ]; then
-	# 	rm -rf $dest
-	# fi
-	# _gitclone https://github.com/massbitprotocol/massbitroute_mkagent $dest
-
-	# service=$type
-	# gitdir=$service_dir/$service
-	# giturl=https://github.com/massbitprotocol/massbitroute_${service}
-	# if [ -d "$gitdir" ]; then
-	# 	git -C $gitdir remote set-url origin $giturl
-	# 	git -C $gitdir pull
-	# else
-	# 	git clone $giturl $gitdir
-	# fi
-	# sudo sed 's/_DOMAIN_/${DOMAIN}/g' $service_dir/$service/zone.tpl >$service_dir/$service/data/zones/${DOMAIN}
-
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
 	apt-get update
@@ -208,7 +135,8 @@ _update_ssl() {
 
 _monitor() {
 	# renew ssl
-
+	_add_cron
+  _rebuild_conf
 	# check change on git
 	is_reload=0
 	git -C $SITE_ROOT pull origin master | grep -i "updating"
@@ -222,18 +150,6 @@ _monitor() {
 	fi
 }
 
-# _service_grafana() {
-# 	mkdir -p $SITE_ROOT/data/grafana
-# 	GRAFANA_DIR=$SITE_ROOT/bin/grafana/$GRAFANA_VERSION
-# 	exec $GRAFANA_DIR/bin/grafana-server -config $SITE_ROOT/etc/grafana/stat.ini -homepath $GRAFANA_DIR
-# }
-
-# _service_prometheus() {
-# 	mkdir -p $SITE_ROOT/data/prometheus
-# 	PROMETHEUS_DIR=$SITE_ROOT/bin/prometheus/$PROMETHEUS_VERSION
-# 	exec $PROMETHEUS_DIR/bin/prometheus --web.enable-admin-api --config.file=$SITE_ROOT/etc/prometheus/stat.yml --web.listen-address="127.0.0.1:44449" --web.external-url http://127.0.0.1:44449/__internal_prometheus --web.enable-lifecycle --storage.tsdb.path $SITE_ROOT/data/prometheus
-# }
-
 _service_gdnsd() {
 	# apt install -y liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
 
@@ -241,25 +157,11 @@ _service_gdnsd() {
 	exec $GDNSD_DIR/sbin/gdnsd -c $SITE_ROOT -RD start
 }
 
-# _timeout() {
-# 	t=$1
-# 	if [ -n "$t" ]; then
-# 		shift
-# 		timeout $t $0 $@
-# 	else
-# 		$0 $@
-# 	fi
-# }
+
 _run() {
 	rm -rf $SITE_ROOT/tmp/*
 	sleep 3
 	$SITE_ROOT/start_server
 }
-# loop() {
-# 	while true; do
-# 		$0 $@
-# 		sleep 3
-# 	done
 
-# }
 $@
