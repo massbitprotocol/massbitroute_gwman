@@ -71,12 +71,15 @@ _git_cmd() {
 		git clone $_url $_dir -b $_branch
 		git -C $_dir checkout $_branch
 		git -C $_dir branch --set-upstream-to origin/$_branch
-		git -C $_dir pull origin $_branch
+		git -C $_dir pull origin $_branch | grep -i "updating"
+		st=$?
+		echo $st
 
 	else
 		git -C $_dir checkout $_branch
-		git -C $_dir pull origin $_branch
+		git -C $_dir pull origin $_branch | grep -i "updating"
 		st=$?
+		echo $st
 	fi
 	return $st
 }
@@ -136,7 +139,7 @@ _update_ssl() {
 }
 
 _monitor() {
-	_install_repos
+	timeout 60 $0 _install_repos
 	is_reload=$?
 	if [ $is_reload -ne 0 ]; then
 		$0 _reload
