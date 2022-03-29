@@ -136,17 +136,8 @@ _update_ssl() {
 }
 
 _monitor() {
-	# renew ssl
-	_add_cron
-	_rebuild_conf
-	# check change on git
-	is_reload=0
-	git -C $SITE_ROOT pull origin master | grep -i "updating"
-	if [ $? -eq 0 ]; then
-		is_reload=1
-
-	fi
-
+	_install_repos
+	is_reload=$?
 	if [ $is_reload -ne 0 ]; then
 		$0 _reload
 	fi
