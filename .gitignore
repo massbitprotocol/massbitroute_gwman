@@ -1,2 +1,6 @@
+src/
+run
+logs
 /conf.d/
 /geoip/
+.gitconfig
