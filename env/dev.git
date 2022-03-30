@@ -5,7 +5,6 @@ export GIT_PUBLIC_URL="https://github.com"
 export GIT_PRIVATE_URL="https://$GIT_PRIVATE_AUTH@$PRIVATE_GIT_DOMAIN"
 export GIT_AUTH_MAIL=
 export GIT_AUTH_NAME=
-
 export GIT_NODE_WRITE=
 export GIT_GATEWAY_WRITE=
 export GIT_GWMAN_WRITE=
