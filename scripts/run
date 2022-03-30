@@ -1,19 +1,73 @@
 #!/bin/bash
+TYPE="gwman"
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
 export HOME=$SITE_ROOT
 ROOT_DIR=$SITE_ROOT
 
 source $SITE_ROOT/scripts/base.sh
-cd $SITE_ROOT
 _load_env $SITE_ROOT
 
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
-TYPE=gwman
-# service_dir=/massbit/massbitroute/app/src/sites/services
-# cmd_server=$SITE_ROOT/cmd_server
-cd $SITE_ROOT
+
+REPOS="/etc/letsencrypt|$GIT_PRIVATE_READ_URL/massbitroute/ssl.git|master \
+/massbit/massbitroute/app/gbc|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git \
+/massbit/massbitroute/app/gbc/bin/.asdf|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf.git|master \
+$SITE_ROOT|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_${TYPE}.git \
+$SITE_ROOT/etc/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git"
+
+_install() {
+	systemctl disable systemd-resolved
+	systemctl stop systemd-resolved
+
+	echo "nameserver 8.8.8.8" >/etc/resolv.conf
+	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
+	mkdir -p $SITE_ROOT/logs $SITE_ROOT/db
+	_git_config
+	for _pathgit in $REPOS; do
+		_path=$(echo $_pathgit | cut -d'|' -f1)
+		_url=$(echo $_pathgit | cut -d'|' -f2)
+		_branch=$(echo $_pathgit | cut -d'|' -f3)
+		_git_clone $_url $_path $_branch
+	done
+
+	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
+	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
+	apt-get update
+	apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
+		liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
+
+	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
+	systemctl enable supervisor
+	systemctl start supervisor
+
+	# mkdir -p $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
+
+	# mkdir -p $SITE_ROOT/data/zones
+	# sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
+
+	# ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
+	# ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
+	# apt-get update
+	# apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
+	# 	liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
+
+	# cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
+
+	# for svr in systemd-resolved; do
+	# 	systemctl disable $svr
+	# 	systemctl stop $svr
+	# done
+
+	# for svr in supervisor; do
+	# 	systemctl enable $svr
+	# 	systemctl start $svr
+	# done
+
+	# supervisorctl update
+}
+
 _add_cron() {
 	cat <<EOF >/tmp/crontab
 0 0 * * * $SITE_ROOT/scripts/run _update_ssl
@@ -58,76 +112,49 @@ _reload() {
 	$SITE_ROOT/cmd_server _update
 }
 
-_git_cmd() {
-	_cmd=$1
-	_url=$2
-	_dir=$3
-	_branch=$4
-	if [ -z "$_branch" ]; then _branch=$MBR_ENV; fi
-	st=0
-	if [ "$_cmd" = "clone" ]; then
-		# if [ -d "$_dir" ]; then rm -rf $_dir; fi
-		mkdir -p $_dir
-		git clone $_url $_dir -b $_branch
-		git -C $_dir checkout $_branch
-		git -C $_dir branch --set-upstream-to origin/$_branch
-		git -C $_dir pull origin $_branch | grep -i "updating"
-		st=$?
-		echo $st
+# _git_cmd() {
+# 	_cmd=$1
+# 	_url=$2
+# 	_dir=$3
+# 	_branch=$4
+# 	if [ -z "$_branch" ]; then _branch=$MBR_ENV; fi
+# 	st=1
+# 	if [ "$_cmd" = "clone" ]; then
+# 		# if [ -d "$_dir" ]; then rm -rf $_dir; fi
+# 		mkdir -p $_dir
+# 		git clone $_url $_dir -b $_branch
+# 		git -C $_dir checkout $_branch
+# 		git -C $_dir branch --set-upstream-to origin/$_branch
+# 		git -C $_dir pull origin $_branch | grep -i "updating"
+# 		st=$?
+# 		echo $st
 
-	else
-		git -C $_dir checkout $_branch
-		git -C $_dir pull origin $_branch | grep -i "updating"
-		st=$?
-		echo $st
-	fi
-	return $st
-}
+# 	elif [ "$_cmd" = "pull" ]; then
+# 		git -C $_dir checkout $_branch
+# 		git -C $_dir pull origin $_branch | grep -i "updating"
+# 		st=$?
+# 		echo $st
+# 	fi
+# 	return $st
+# }
 
-_get_status_cmd() {
-	_ret=$1
-	shift
-	$@
-	st=$?
-	if [ $st -ne 0 ]; then _ret=$st; fi
-	return $_ret
-}
-_install_repos() {
-	_git_config
-	ret=0
-	_get_status_cmd $ret _git_cmd clone $GIT_PRIVATE_URL/massbitroute/ssl.git /etc/letsencrypt master
-	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc /massbit/massbitroute/app/gbc
-	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf /massbit/massbitroute/app/gbc/bin/.asdf master
-	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent $SITE_ROOT/etc/mkagent
-	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman $SITE_ROOT
-}
-
-_install() {
-	mkdir -p $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
-	_install_repo
-	mkdir -p $SITE_ROOT/data/zones
-	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
-
-	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
-	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
-	apt-get update
-	apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
-		liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
-
-	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
-
-	for svr in systemd-resolved; do
-		systemctl disable $svr
-		systemctl stop $svr
-	done
-
-	for svr in supervisor; do
-		systemctl enable $svr
-		systemctl start $svr
-	done
-
-	# supervisorctl update
-}
+# _get_status_cmd() {
+# 	_ret=$1
+# 	shift
+# 	$@
+# 	st=$?
+# 	if [ $st -eq 0 ]; then _ret=$st; fi
+# 	return $_ret
+# }
+# _install_repos() {
+# 	_git_config
+# 	ret=1
+# 	_get_status_cmd $ret _git_cmd clone $GIT_PRIVATE_URL/massbitroute/ssl.git /etc/letsencrypt master
+# 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc /massbit/massbitroute/app/gbc
+# 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf /massbit/massbitroute/app/gbc/bin/.asdf master
+# 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent $SITE_ROOT/etc/mkagent
+# 	_get_status_cmd $ret _git_cmd clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman $SITE_ROOT
+# }
 
 _update_ssl() {
 	_git_config
@@ -139,9 +166,10 @@ _update_ssl() {
 }
 
 _monitor() {
-	timeout 60 $0 _install_repos
+	echo mbr-gwman >vars/TYPE
+	_update_sources $REPOS
 	is_reload=$?
-	if [ $is_reload -ne 0 ]; then
+	if [ $is_reload -eq 0 ]; then
 		$0 _reload
 	fi
 }
