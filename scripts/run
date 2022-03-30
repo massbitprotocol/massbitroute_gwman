@@ -23,6 +23,8 @@ _install() {
 
 	echo "nameserver 8.8.8.8" >/etc/resolv.conf
 	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
+	cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
+
 	mkdir -p $SITE_ROOT/logs $SITE_ROOT/db
 	_git_config
 	for _pathgit in $REPOS; do
