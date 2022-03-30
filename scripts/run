@@ -38,9 +38,11 @@ _install() {
 	apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
 		liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev
 
-	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
 	systemctl enable supervisor
 	systemctl start supervisor
+
+	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
+	supervisorctl update
 
 	# mkdir -p $SITE_ROOT/etc $SITE_ROOT/data $SITE_ROOT/logs
 
