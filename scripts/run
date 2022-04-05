@@ -22,6 +22,9 @@ $SITE_ROOT|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_${TYPE}.git \
 $SITE_ROOT/etc/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git"
 _prepare() {
 	echo "Prepare"
+	systemctl stop systemd-resolve
+	systemctl disable systemd-resolve
+	echo nameserver 8.8.8.8 >/etc/resolv.conf
 }
 _install() {
 	systemctl disable systemd-resolved
@@ -111,6 +114,7 @@ _update_ssl() {
 
 _monitor() {
 	echo mbr-gwman >vars/TYPE
+	echo nameserver 8.8.8.8 >/etc/resolv.conf
 	_update_sources $REPOS
 	is_reload=$?
 	if [ $is_reload -eq 0 ]; then
