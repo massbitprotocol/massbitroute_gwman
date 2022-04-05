@@ -8,6 +8,15 @@ local _config = {
     },
     templates = {},
     apps = {},
+    supervisors = {
+        ["monitor_client"] = [[
+[program:monitor_client]
+command=/bin/bash _SITE_ROOT_/etc/mkagent/agents/push.sh _SITE_ROOT_
+autorestart=true
+redirect_stderr=true
+stdout_logfile=_SITE_ROOT_/logs/monitor_client.log
+    ]]
+    },
     supervisor = [[
 [program:gwman_monitor]
 command=/bin/bash _SITE_ROOT_/scripts/run loop _monitor _SITE_ROOT_ v1
