@@ -22,8 +22,10 @@ $SITE_ROOT|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_${TYPE}.git \
 $SITE_ROOT/etc/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git"
 _prepare() {
 	echo "Prepare"
-	systemctl stop systemd-resolve
-	systemctl disable systemd-resolve
+	sed 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf -i
+	pkill -f systemd-resolve
+	# systemctl stop systemd-resolve
+	# systemctl disable systemd-resolve
 	echo nameserver 8.8.8.8 >/etc/resolv.conf
 }
 _install() {
