@@ -17,14 +17,14 @@ redirect_stderr=true
 stdout_logfile=_SITE_ROOT_/logs/monitor_client.log
     ]]
     },
-    supervisor = [[
+    supervisor_tmp = [[
 [program:gwman_monitor]
 command=/bin/bash _SITE_ROOT_/scripts/run loop _monitor _SITE_ROOT_ v1
 autorestart=true
 redirect_stderr=true
 stdout_logfile=_SITE_ROOT_/logs/gwman_pull.log
-
-
+]],
+    supervisor = [[
 [program:gwman_gdnsd]
 command=/bin/bash _SITE_ROOT_/scripts/run loop _service_gdnsd _SITE_ROOT_ v1
 autorestart=true
