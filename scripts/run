@@ -51,6 +51,7 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
+	mkdir -p $SITE_ROOT/data/zones
 	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
 	mkdir -p $SITE_ROOT/zones
 	cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
