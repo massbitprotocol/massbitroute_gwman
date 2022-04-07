@@ -4,11 +4,10 @@ SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
 export HOME=$SITE_ROOT
 # ROOT_DIR=$SITE_ROOT
 
-bash $SITE_ROOT/cmd_server _env
-source $SITE_ROOT/.env_raw
-
+if [ -e "$SITE_ROOT/cmd_server" ]; then bash $SITE_ROOT/cmd_server _env; fi
+if [ -f "$SITE_ROOT/.env_raw" ]; then source $SITE_ROOT/.env_raw; fi
 source $SITE_ROOT/scripts/base.sh
-# _load_env $SITE_ROOT
+
 cd $SITE_ROOT
 
 mbr_root=/massbit/massbitroute/app
