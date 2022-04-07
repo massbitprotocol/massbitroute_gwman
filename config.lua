@@ -14,6 +14,9 @@ local _config = {
 command=/bin/bash _SITE_ROOT_/../mkagent/agents/push.sh _SITE_ROOT_/../mkagent
 autorestart=true
 redirect_stderr=true
+stopasgroup=true
+killasgroup=true
+stopsignal=INT
 stdout_logfile=_SITE_ROOT_/../mkagent/logs/monitor_client.log
     ]]
     },
@@ -29,6 +32,9 @@ stdout_logfile=_SITE_ROOT_/logs/gwman_pull.log
 command=/bin/bash _SITE_ROOT_/scripts/run loop _service_gdnsd _SITE_ROOT_ v1
 autorestart=true
 redirect_stderr=true
+stopasgroup=true
+killasgroup=true
+stopsignal=INT
 stdout_logfile=_SITE_ROOT_/logs/gwman_gdnsd.log
     ]]
 }
