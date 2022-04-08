@@ -51,7 +51,7 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
-	mkdir -p $SITE_ROOT/data/zones
+	# mkdir -p $SITE_ROOT/data/zones
 
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
 		apt update
