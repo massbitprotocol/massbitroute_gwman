@@ -59,7 +59,7 @@ _prepare() {
 		tar -xvJf $SITE_ROOT/geoip/GeoIP2-City.mmdb.tar.xz -C $SITE_ROOT/geoip
 	fi
 
-	sed 's/_DOMAIN_/${DOMAIN}/g' $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
+	sed "s/_DOMAIN_/${DOMAIN}/g" $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
 	mkdir -p $SITE_ROOT/zones
 	cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
 }
