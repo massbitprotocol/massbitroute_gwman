@@ -42,16 +42,16 @@ $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$M
 "
 }
 _repo
-_init() {
+_prepare() {
+	echo "Prepare"
+
 	source $SITE_ROOT/.env
 	_git_clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git /massbit/massbitroute/app/gbc
+
+	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/gwmandeploy.git $service_dir/gwman/data $GWMAN_BRANCH
 	bash $SITE_ROOT/cmd_server _env
 	source $SITE_ROOT/.env_raw
 	_repo
-}
-_prepare() {
-	echo "Prepare"
-	# mkdir -p $SITE_ROOT/data/zones
 
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
 		apt update
@@ -94,7 +94,6 @@ _install() {
 	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp
 	_git_config
 	_prepare
-	_init
 	# for _pathgit in $REPOS; do
 	# 	_path=$(echo $_pathgit | cut -d'|' -f1)
 	# 	_url=$(echo $_pathgit | cut -d'|' -f2)
