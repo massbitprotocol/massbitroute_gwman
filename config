@@ -10,32 +10,32 @@ options => {
 }
 
 service_types => {
-    $include{conf.d/monitors.d/*}
+    $include{data/conf.d/monitors.d/*}
 }
 
 
 plugins => {
     simplefo => {
-        $include{conf.d/failover.d/*}
+        $include{data/conf.d/failover.d/*}
     }
     weighted => {
-            $include{conf.d/weighted.d/*}
+            $include{data/conf.d/weighted.d/*}
     }
     multifo => {
-            $include{conf.d/multivalue.d/*}
+            $include{data/conf.d/multivalue.d/*}
     }
 
     metafo => {
         resources => {
-            $include{conf.d/datacenter.d/*}
+            $include{data/conf.d/datacenter.d/*}
         }
     }
     geoip =>  {
             maps => {
-                $include{conf.d/geolocation.d/maps.d/*}
+                $include{data/conf.d/geolocation.d/maps.d/*}
             }
             resources => {
-                $include{conf.d/geolocation.d/resources.d/*}
+                $include{data/conf.d/geolocation.d/resources.d/*}
             }
     }
 }
