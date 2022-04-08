@@ -176,7 +176,8 @@ _monitor() {
 	echo nameserver 8.8.8.8 >/etc/resolv.conf
 	_update_sources $REPOS
 	is_reload=$?
-	if [ $is_reload -eq 0 ]; then
+
+	if [ $is_reload -ne 0 ]; then
 		$0 _reload
 	fi
 }
