@@ -36,8 +36,8 @@ _repo() {
 $SITE_ROOT/env|$GIT_PRIVATE_READ_URL/massbitroute/env.git|$MBR_ENV \
 /etc/letsencrypt|$GIT_PRIVATE_READ_URL/massbitroute/ssl.git|$SSL_BRANCH \
  $mbr_root/gbc/bin/.asdf|https://github.com/massbitprotocol/massbitroute_asdf|$ASDF_BRANCH \
+  $service_dir/gwman|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman.git|$GWMAN_BRANCH \
   $service_dir/gwman/data|https://$GIT_GWMANDEPLOY_WRITE@$GIT_PRIVATE_DOMAIN/massbitroute/gwmandeploy.git|$GWMAN_BRANCH \
-
 $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$MKAGENT_BRANCH \
 "
 }
@@ -63,9 +63,10 @@ _prepare() {
 
 	source $SITE_ROOT/.env
 	_git_clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git /massbit/massbitroute/app/gbc
-	_git_clone https://github.com/massbitprotocol/massbitroute_asdf $mbr_root/gbc/bin/.asdf $ASDF_BRANCH
+	# _git_clone https://github.com/massbitprotocol/massbitroute_asdf $mbr_root/gbc/bin/.asdf $ASDF_BRANCH
 
-	# _git_clone $GIT_PRIVATE_READ_URL/massbitroute/gwmandeploy.git $service_dir/gwman/data $GWMAN_BRANCH
+	# _git_clone https://$GIT_GWMANDEPLOY_WRITE@$GIT_PRIVATE_DOMAIN/massbitroute/gwmandeploy.git $service_dir/gwman/data $GWMAN_BRANCH
+
 	bash $SITE_ROOT/cmd_server _env
 	source $SITE_ROOT/.env_raw
 	_repo
