@@ -65,7 +65,7 @@ _prepare() {
 	_git_clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git /massbit/massbitroute/app/gbc
 	_git_clone https://github.com/massbitprotocol/massbitroute_asdf $mbr_root/gbc/bin/.asdf $ASDF_BRANCH
 
-	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/gwmandeploy.git $service_dir/gwman/data $GWMAN_BRANCH
+	# _git_clone $GIT_PRIVATE_READ_URL/massbitroute/gwmandeploy.git $service_dir/gwman/data $GWMAN_BRANCH
 	bash $SITE_ROOT/cmd_server _env
 	source $SITE_ROOT/.env_raw
 	_repo
