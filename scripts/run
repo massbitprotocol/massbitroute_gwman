@@ -188,13 +188,15 @@ _update_repos() {
 _update() {
 	_st_update=0
 	echo "Update"
+	_update_repos
+	_st_update=$?
 	return $_st_update
 }
 _monitor() {
 	echo mbr-gwman >vars/TYPE
 
-	_update_repos
-	is_reload=$?
+	# _update_repos
+	# is_reload=$?
 
 	_update
 	if [ $is_reload -ne 0 ]; then
