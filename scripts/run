@@ -170,11 +170,32 @@ _update_ssl() {
 	$git_ssl push origin master
 }
 
+_update_repos() {
+	_repo
+	_update_sources $REPOS
+	_st_repo=$?
+	return $_st_repo
+}
+
+_update() {
+	_st_update=0
+	echo "Update"
+	return $_st_update
+}
 _monitor() {
 	echo mbr-gwman >vars/TYPE
-	echo nameserver 8.8.8.8 >/etc/resolv.conf
-	_update_sources $REPOS
+
+	_update_repos
 	is_reload=$?
+
+	_update
+	if [ $is_reload -ne 0 ]; then
+		is_reload=$?
+	fi
+
+	# echo nameserver 8.8.8.8 >/etc/resolv.conf
+	# _update_sources $REPOS
+	# is_reload=$?
 
 	if [ $is_reload -ne 0 ]; then
 		$0 _reload
