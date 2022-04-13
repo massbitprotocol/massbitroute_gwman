@@ -13,7 +13,7 @@ cd $SITE_ROOT
 mbr_root=/massbit/massbitroute/app
 service_dir=$mbr_root/src/sites/services
 
-export BRANCH=${BRANCH:-dev}
+export MBR_ENV=${MBR_ENV:-dev}
 export MBRAPP_BRANCH=${MBRAPP_BRANCH:-staging}
 export ASDF_BRANCH=${ASDF_BRANCH:-dev}
 export GBC_BRANCH=${GBC_BRANCH:-dev}
@@ -62,10 +62,13 @@ _init() {
 		exit 1
 	fi
 	_tune_os
-
-	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/env.git /massbit/massbitroute/app/src/env $BRANCH
+	if [ ! -f "$SITE_ROOT/.env" ]; then
+		echo "$MBR_ENV" >$SITE_ROOT/.env
+	fi
 
 	source $SITE_ROOT/.env
+
+	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/env.git /massbit/massbitroute/app/src/env $MBR_ENV
 	_git_clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git /massbit/massbitroute/app/gbc
 
 	bash $SITE_ROOT/cmd_server _env
@@ -74,7 +77,8 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
-	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp
+	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db
+
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
 		apt update
 		apt-get install -y xz-utils
