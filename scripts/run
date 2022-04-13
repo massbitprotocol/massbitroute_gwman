@@ -115,6 +115,7 @@ _supervisor() {
 }
 _install() {
 	_init
+	_prepare
 	_install_repos
 	_supervisor
 
