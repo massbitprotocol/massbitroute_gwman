@@ -77,7 +77,7 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
-	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db
+	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db $SITE_ROOT/zones $SITE_ROOT/data
 
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
 		apt update
@@ -86,7 +86,6 @@ _prepare() {
 	fi
 
 	sed "s/_DOMAIN_/${DOMAIN}/g" $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
-	mkdir -p $SITE_ROOT/zones
 	cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
 }
 
