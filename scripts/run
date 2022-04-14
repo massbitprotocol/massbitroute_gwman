@@ -122,7 +122,6 @@ _install_one() {
 _install() {
 	_install_one
 	_supervisor
-
 }
 
 _add_cron() {
