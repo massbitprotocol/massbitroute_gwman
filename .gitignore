@@ -6,3 +6,7 @@ logs
 /conf.d/
 /geoip/
 .gitconfig
+/db/
+/tmp/
+/.env_raw
+/.module_paths
