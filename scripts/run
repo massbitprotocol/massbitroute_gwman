@@ -77,7 +77,7 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
-	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db $SITE_ROOT/zones $SITE_ROOT/data
+	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db $SITE_ROOT/zones $SITE_ROOT/data/zones
 
 	# rm -rf $SITE_ROOT/tmp/*
 
