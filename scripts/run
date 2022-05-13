@@ -107,7 +107,7 @@ _prepare() {
 		tar -xvJf $SITE_ROOT/geoip/GeoIP2-City.mmdb.tar.xz -C $SITE_ROOT/geoip
 	fi
 
-	if [ -d "$SITE_ROOT/data/zones/.git" ]; then
+	if [ -d "$SITE_ROOT/data/.git" ]; then
 		if [ ! -f "$SITE_ROOT/data/zones/${DOMAIN}" ]; then
 			sed "s/_DOMAIN_/${DOMAIN}/g" $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
 		fi
