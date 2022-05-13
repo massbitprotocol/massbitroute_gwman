@@ -215,20 +215,26 @@ _rebuild_conf() {
 		echo >>$_file
 	fi
 
-	find $_dir/dapi -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
+	if [ -d "$_dir/dapi" ]; then
+		find $_dir/dapi -type f -iname '*.zone' | while read f; do
+			cat $f >>$_file
+			echo >>$_file
+		done
+	fi
 
-	find $_dir/gateway -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
+	if [ -d "$_dir/gateway" ]; then
+		find $_dir/gateway -type f -iname '*.zone' | while read f; do
+			cat $f >>$_file
+			echo >>$_file
+		done
+	fi
 
-	find $_dir/node -type f -iname '*.zone' | while read f; do
-		cat $f >>$_file
-		echo >>$_file
-	done
+	if [ -d "$_dir/node" ]; then
+		find $_dir/node -type f -iname '*.zone' | while read f; do
+			cat $f >>$_file
+			echo >>$_file
+		done
+	fi
 
 	mv $_file $_file_ok
 }
