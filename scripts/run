@@ -140,6 +140,11 @@ _rebuild_conf() {
 	cat $_dir/$DOMAIN >$_file
 	echo >>$_file
 
+	if [ -f "$SITE_ROOT/env/domain" ]; then
+		cat $SITE_ROOT/env/domain >>$_file
+		echo >>$_file
+	fi
+
 	find $_dir/dapi -type f -iname '*.zone' | while read f; do
 		cat $f >>$_file
 		echo >>$_file
