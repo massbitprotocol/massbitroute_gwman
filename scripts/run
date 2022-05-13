@@ -77,9 +77,28 @@ _init() {
 }
 _prepare() {
 	echo "Prepare"
-	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db $SITE_ROOT/zones $SITE_ROOT/data/zones
+	mkdir -p $SITE_ROOT/logs/nginx $SITE_ROOT/db $SITE_ROOT/tmp $SITE_ROOT/db $SITE_ROOT/zones $SITE_ROOT/run
 
-	# rm -rf $SITE_ROOT/tmp/*
+	# 	cd $SITE_ROOT
+	# 	for _d in monitors.d failover.d weighted.d multivalue.d datacenter.d geolocation.d/maps.d geolocation.d/resources.d; do
+	# 		_dir=data/conf.d/$_d
+	# 		mkdir -p $_dir
+	# 		touch $_dir/_default
+	# 	done
+
+	# 	if [ ! -f "$SITE_ROOT/data/conf.d/monitors.d/gateway" ]; then
+	# 		cat >$SITE_ROOT/data/conf.d/monitors.d/gateway <<EOF
+	#  gateway_check => {
+	#     plugin => tcp_connect,
+	#     port => 443,
+	#     up_thresh => 20,
+	#     ok_thresh => 10,
+	#     down_thresh => 10,
+	#     interval => 10,
+	#     timeout => 3,
+	#   }
+	# EOF
+	# fi
 
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
 		apt update
@@ -87,8 +106,58 @@ _prepare() {
 		tar -xvJf $SITE_ROOT/geoip/GeoIP2-City.mmdb.tar.xz -C $SITE_ROOT/geoip
 	fi
 
-	sed "s/_DOMAIN_/${DOMAIN}/g" $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
-	cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
+	if [ ! -f "$SITE_ROOT/data/zones/${DOMAIN}" ]; then
+		sed "s/_DOMAIN_/${DOMAIN}/g" $SITE_ROOT/etc/zone.tpl >$SITE_ROOT/data/zones/${DOMAIN}
+	fi
+
+	if [ ! -f "$SITE_ROOT/zones/${DOMAIN}" ]; then
+		cp $SITE_ROOT/data/zones/${DOMAIN} $SITE_ROOT/zones/${DOMAIN}
+	fi
+	if [ ! -f "$SITE_ROOT/config" ]; then
+		cat $SITE_ROOT/config <<EOF
+options => {
+    run_dir = $SITE_ROOT/run
+    state_dir = $SITE_ROOT/run
+    tcp_threads => 1
+    udp_threads => 1
+    edns_client_subnet => true
+    zones_default_ttl => 3600
+    listen => [127.0.0.1]
+    dns_port = 5300
+}
+
+service_types => {
+    $include{data/conf.d/monitors.d/*}
+}
+
+
+plugins => {
+    simplefo => {
+        $include{data/conf.d/failover.d/*}
+    }
+    weighted => {
+            $include{data/conf.d/weighted.d/*}
+    }
+    multifo => {
+            $include{data/conf.d/multivalue.d/*}
+    }
+
+    metafo => {
+        resources => {
+            $include{data/conf.d/datacenter.d/*}
+        }
+    }
+    geoip =>  {
+            maps => {
+                $include{data/conf.d/geolocation.d/maps.d/*}
+            }
+            resources => {
+                $include{data/conf.d/geolocation.d/resources.d/*}
+            }
+    }
+}
+EOF
+	fi
 }
 
 _install_repos() {

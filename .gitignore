@@ -2,6 +2,7 @@ zones/
 env/
 src/
 run
+data/
 logs
 /conf.d/
 /geoip/
