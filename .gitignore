@@ -11,3 +11,4 @@ logs
 /tmp/
 /.env_raw
 /.module_paths
+.env
