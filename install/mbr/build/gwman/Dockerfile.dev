@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as base
 MAINTAINER "Vu Tran<baysao@massbit.io>"
 
 ARG BRANCH="testing"
@@ -15,7 +15,7 @@ RUN apt-get update \
     ; sed '/\[unix_http_server/a user=root\nusername=dummy\npassword=dummy\nloglevel=error' -i /etc/supervisor/supervisord.conf \
     ; sed '/\[supervisorctl/a user=root\nusername=dummy\npassword=dummy\nloglevel=error' -i /etc/supervisor/supervisord.conf
 
-
+FROM  base as release
 ADD . /massbit/massbitroute/app/src/sites/services/gwman
 RUN bash -x /massbit/massbitroute/app/src/sites/services/gwman/scripts/run _install
 

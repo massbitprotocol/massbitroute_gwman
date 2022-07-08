@@ -64,10 +64,16 @@ _init() {
 		echo "Need GIT_PRIVATE_READ_URL"
 		exit 1
 	fi
-	_tune_os
-	if [ ! -f "$SITE_ROOT/.env" ]; then
-		echo "$MBR_ENV" >$SITE_ROOT/.env
-	fi
+	cat <<EOF >$SITE_ROOT/.env
+export GIT_PUBLIC_URL="https://github.com"
+export MBR_ENV=$MBR_ENV
+export GIT_PRIVATE_READ_URL=$GIT_PRIVATE_READ_URL
+EOF
+
+	# _tune_os
+	# if [ ! -f "$SITE_ROOT/.env" ]; then
+	# 	echo "$MBR_ENV" >$SITE_ROOT/.env
+	# fi
 
 	source $SITE_ROOT/.env
 
@@ -278,6 +284,13 @@ _update_repos() {
 }
 
 _update() {
+	if [ ! -f "$SITE_ROOT/.env" ]; then
+		cat <<EOF >$SITE_ROOT/.env
+export GIT_PUBLIC_URL="https://github.com"
+export MBR_ENV=$MBR_ENV
+export GIT_PRIVATE_READ_URL=$GIT_PRIVATE_READ_URL
+EOF
+	fi
 	_st_update=0
 	echo "Update"
 	_update_repos
