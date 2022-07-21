@@ -48,6 +48,26 @@ $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$M
 }
 _repo
 
+_tune_extra() {
+	if [ ! -f "/etc/logrotate.d/massbit" ]; then
+		cat >/etc/logrotate.d/massbit <<EOF
+$SITE_ROOT/logs/access/*.log
+$SITE_ROOT/logs/nginx/*.log
+$SITE_ROOT/logs/*.log {
+       daily
+       rotate 1
+       delaycompress
+       compress
+       notifempty
+       missingok
+       sharedscripts
+        postrotate
+                [ -f $SITE_ROOT/tmp/nginx.pid ] && kill -USR1 \$(cat $SITE_ROOT/tmp/nginx.pid)
+        endscript
+}
+EOF
+	fi
+}
 _tune_os() {
 	#dns
 	sed 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf -i
@@ -299,6 +319,7 @@ EOF
 _monitor() {
 	echo mbr-gwman >vars/TYPE
 
+	_tune_extra
 	_update
 	is_reload=$?
 
