@@ -312,8 +312,8 @@ EOF
 	fi
 	_st_update=0
 	echo "Update"
-	_update_repos
-	_st_update=$?
+	# _update_repos
+	# _st_update=$?
 	return $_st_update
 }
 _monitor() {
