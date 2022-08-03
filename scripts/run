@@ -13,32 +13,34 @@ cd $SITE_ROOT
 mbr_root=/massbit/massbitroute/app
 service_dir=$mbr_root/src/sites/services
 
-export MBR_ENV=${MBR_ENV:-dev}
-export MBRAPP_BRANCH=${MBRAPP_BRANCH:-staging}
-export ASDF_BRANCH=${ASDF_BRANCH:-$MBR_ENV}
-export GBC_BRANCH=${GBC_BRANCH:-$MBR_ENV}
-export SSL_BRANCH=${SSL_BRANCH:-$MBR_ENV}
-export GWMAN_BRANCH=${GWMAN_BRANCH:-$MBR_ENV}
-export NODE_BRANCH=${NODE_BRANCH:-$MBR_ENV}
-export GATEWAY_BRANCH=${GATEWAY_BRANCH:-$MBR_ENV}
-export STAT_BRANCH=${STAT_BRANCH:-$MBR_ENV}
-export MONITOR_BRANCH=${MONITOR_BRANCH:-$MBR_ENV}
-export API_BRANCH=${API_BRANCH:-$MBR_ENV}
-export SESSION_BRANCH=${SESSION_BRANCH:-$MBR_ENV}
-export GIT_BRANCH=${GIT_BRANCH:-$MBR_ENV}
-export MKAGENT_BRANCH=${MKAGENT_BRANCH:-$MBR_ENV}
-
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
 #  $service_dir/gwman/data|http://$GIT_GWMANDEPLOY_WRITE@$GIT_PRIVATE_DOMAIN/massbitroute/gwmandeploy.git|$GWMAN_BRANCH \
 _repo() {
+	if [ -e "$SITE_ROOT/cmd_server" ]; then bash $SITE_ROOT/cmd_server _env; fi
+	if [ -f "$SITE_ROOT/.env_raw" ]; then source $SITE_ROOT/.env_raw; fi
+
+	export MBR_ENV=${MBR_ENV:-dev}
+	# export MBRAPP_BRANCH=${MBRAPP_BRANCH:-staging}
+	export ASDF_BRANCH=${ASDF_BRANCH:-$MBR_ENV}
+	export GBC_BRANCH=${GBC_BRANCH:-$MBR_ENV}
+	export SSL_BRANCH=${SSL_BRANCH:-$MBR_ENV}
+	export GWMAN_BRANCH=${GWMAN_BRANCH:-$MBR_ENV}
+	# export NODE_BRANCH=${NODE_BRANCH:-$MBR_ENV}
+	# export GATEWAY_BRANCH=${GATEWAY_BRANCH:-$MBR_ENV}
+	# export STAT_BRANCH=${STAT_BRANCH:-$MBR_ENV}
+	# export MONITOR_BRANCH=${MONITOR_BRANCH:-$MBR_ENV}
+	# export API_BRANCH=${API_BRANCH:-$MBR_ENV}
+	# export SESSION_BRANCH=${SESSION_BRANCH:-$MBR_ENV}
+	# export GIT_BRANCH=${GIT_BRANCH:-$MBR_ENV}
+	export MKAGENT_BRANCH=${MKAGENT_BRANCH:-$MBR_ENV}
+
 	REPOS="\
 $SITE_ROOT/env|$GIT_PRIVATE_READ_URL/massbitroute/env.git|$MBR_ENV \
 /etc/letsencrypt|$GIT_PRIVATE_READ_URL/massbitroute/ssl.git|$SSL_BRANCH \
  $mbr_root/gbc|https://github.com/massbitprotocol/massbitroute_gbc|$GBC_BRANCH \
  $mbr_root/gbc/bin/.asdf|https://github.com/massbitprotocol/massbitroute_asdf|$ASDF_BRANCH \
-
   $service_dir/gwman/data|$GIT_PRIVATE_READ_URL/massbitroute/gwmandeploy.git|$GWMAN_BRANCH \
   $service_dir/gwman|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gwman.git|$GWMAN_BRANCH \
 $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$MKAGENT_BRANCH \
@@ -46,6 +48,26 @@ $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$M
 }
 _repo
 
+_tune_extra() {
+	if [ ! -f "/etc/logrotate.d/massbit" ]; then
+		cat >/etc/logrotate.d/massbit <<EOF
+$SITE_ROOT/logs/access/*.log
+$SITE_ROOT/logs/nginx/*.log
+$SITE_ROOT/logs/*.log {
+       daily
+       rotate 1
+       delaycompress
+       compress
+       notifempty
+       missingok
+       sharedscripts
+        postrotate
+                [ -f $SITE_ROOT/tmp/nginx.pid ] && kill -USR1 \$(cat $SITE_ROOT/tmp/nginx.pid)
+        endscript
+}
+EOF
+	fi
+}
 _tune_os() {
 	#dns
 	sed 's/#DNSStubListener=yes/DNSStubListener=no/' /etc/systemd/resolved.conf -i
@@ -62,18 +84,25 @@ _init() {
 		echo "Need GIT_PRIVATE_READ_URL"
 		exit 1
 	fi
-	_tune_os
-	if [ ! -f "$SITE_ROOT/.env" ]; then
-		echo "$MBR_ENV" >$SITE_ROOT/.env
-	fi
+	cat <<EOF >$SITE_ROOT/.env
+export GIT_PUBLIC_URL="https://github.com"
+export MBR_ENV=$MBR_ENV
+EOF
+
+	# _tune_os
+	# if [ ! -f "$SITE_ROOT/.env" ]; then
+	# 	echo "$MBR_ENV" >$SITE_ROOT/.env
+	# fi
 
 	source $SITE_ROOT/.env
 
-	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/env.git /massbit/massbitroute/app/src/env $MBR_ENV
+	_repo
+
+	_git_clone $GIT_PRIVATE_READ_URL/massbitroute/env.git $SITE_ROOT/env $MBR_ENV
 	_git_clone $GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc.git /massbit/massbitroute/app/gbc
 
-	bash $SITE_ROOT/cmd_server _env
-	source $SITE_ROOT/.env_raw
+	# bash $SITE_ROOT/cmd_server _env
+	# source $SITE_ROOT/.env_raw
 	_repo
 }
 _prepare() {
@@ -102,8 +131,8 @@ _prepare() {
 	# fi
 
 	if [ ! -f "$SITE_ROOT/geoip/GeoIP2-City.mmdb" ]; then
-		apt update
-		apt-get install -y xz-utils
+		# apt update
+		# apt-get install -y xz-utils
 		tar -xvJf $SITE_ROOT/geoip/GeoIP2-City.mmdb.tar.xz -C $SITE_ROOT/geoip
 	fi
 
@@ -165,8 +194,9 @@ EOF
 
 _install_repos() {
 	_git_config
-	_repo
+
 	for _pathgit in $REPOS; do
+		_repo
 		_path=$(echo $_pathgit | cut -d'|' -f1)
 		_url=$(echo $_pathgit | cut -d'|' -f2)
 		_branch=$(echo $_pathgit | cut -d'|' -f3)
@@ -176,16 +206,20 @@ _install_repos() {
 _supervisor() {
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
-	apt-get update
-	apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
-		liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev cron
+	# apt-get update
+	# apt-get install -y git apache2-utils supervisor jq python-is-python2 libssl-dev \
+	# 	liburcu-dev libev-dev libsodium-dev libtool libunwind-dev libmaxminddb-dev cron
 
-	systemctl enable supervisor
-	systemctl start supervisor
+	if [ -f "/usr/bin/systemctl" ]; then
+		systemctl enable supervisor
+		systemctl start supervisor
+	fi
 
 	mkdir -p /etc/supervisor/conf.d
 	cp supervisor.conf /etc/supervisor/conf.d/${TYPE}.conf
-	supervisorctl update
+	if [ "$MBR_MODE" != "docker" ]; then
+		supervisorctl update
+	fi
 }
 _install_one() {
 	_init
@@ -270,6 +304,12 @@ _update_repos() {
 }
 
 _update() {
+	if [ ! -f "$SITE_ROOT/.env" ]; then
+		cat <<EOF >$SITE_ROOT/.env
+export GIT_PUBLIC_URL="https://github.com"
+export MBR_ENV=$MBR_ENV
+EOF
+	fi
 	_st_update=0
 	echo "Update"
 	_update_repos
@@ -279,6 +319,7 @@ _update() {
 _monitor() {
 	echo mbr-gwman >vars/TYPE
 
+	_tune_extra
 	_update
 	is_reload=$?
 
