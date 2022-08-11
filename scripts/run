@@ -290,7 +290,9 @@ _reload() {
 # }
 
 _update() {
+
 	echo "Update"
+	_env
 	_prepare
 	_st_update=0
 
