@@ -296,7 +296,7 @@ _update() {
 
 	_update_repos
 	_st_update=$?
-	_commit_repos
+	# _commit_repos
 	return $_st_update
 }
 
