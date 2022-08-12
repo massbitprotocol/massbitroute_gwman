@@ -261,7 +261,6 @@ _reload() {
 	$SITE_ROOT/cmd_server update
 	$SITE_ROOT/cmd_server start all
 }
-}
 
 _update() {
 
