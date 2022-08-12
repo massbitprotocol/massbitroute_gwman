@@ -2,10 +2,8 @@
 TYPE="gwman"
 SITE_ROOT=$(realpath $(dirname $(realpath $0))/..)
 export HOME=$SITE_ROOT
-# ROOT_DIR=$SITE_ROOT
+ROOT_DIR=$SITE_ROOT
 
-# if [ -e "$SITE_ROOT/cmd_server" ]; then bash $SITE_ROOT/cmd_server _env; fi
-# if [ -f "$SITE_ROOT/.env_raw" ]; then source $SITE_ROOT/.env_raw; fi
 source $SITE_ROOT/scripts/base.sh
 
 cd $SITE_ROOT
@@ -16,7 +14,6 @@ service_dir=$mbr_root/src/sites/services
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
-#  $service_dir/gwman/data|http://$GIT_GWMANDEPLOY_WRITE@$GIT_PRIVATE_DOMAIN/massbitroute/gwmandeploy.git|$GWMAN_BRANCH \
 
 _repo() {
 	if [ -z "$MBR_ENV" ]; then
@@ -178,17 +175,6 @@ _update_repos() {
 	return $_update_status
 }
 
-# _install_repos() {
-# 	_git_config
-
-# 	for _pathgit in $REPOS; do
-# 		_repo
-# 		_path=$(echo $_pathgit | cut -d'|' -f1)
-# 		_url=$(echo $_pathgit | cut -d'|' -f2)
-# 		_branch=$(echo $_pathgit | cut -d'|' -f3)
-# 		_git_clone $_url $_path $_branch
-# 	done
-# }
 _supervisor() {
 	ln -sf /massbit/massbitroute/app/gbc /massbit/massbitroute/app/src/gbc
 	ln -sf /massbit/massbitroute/app/gbc/bin/openresty /usr/local/openresty
@@ -272,22 +258,6 @@ _reload() {
 	_reload_gdnsd
 	$SITE_ROOT/cmd_server _update
 }
-
-# _update_ssl() {
-# 	_git_config
-# 	git_ssl='git -C /etc/letsencrypt'
-# 	bash $SITE_ROOT/cert.sh _renew
-# 	$git_ssl add /etc/letsencrypt
-# 	$git_ssl commit -m update
-# 	$git_ssl push origin master
-# }
-
-# _update_repos() {
-# 	_repo
-# 	_update_sources $REPOS
-# 	_st_repo=$?
-# 	return $_st_repo
-# }
 
 _update() {
 
