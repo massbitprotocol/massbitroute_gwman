@@ -256,7 +256,11 @@ _reload() {
 	# _add_cron
 	_rebuild_conf
 	_reload_gdnsd
+
 	$SITE_ROOT/cmd_server _update
+	$SITE_ROOT/cmd_server update
+	$SITE_ROOT/cmd_server start all
+}
 }
 
 _update() {
