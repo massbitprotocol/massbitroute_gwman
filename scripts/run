@@ -225,6 +225,7 @@ _install() {
 # }
 
 _rebuild_conf() {
+	_env
 	if [ -z "$DOMAIN" ]; then
 		echo "DOMAIN missing"
 		exit 1
