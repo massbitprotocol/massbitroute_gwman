@@ -225,6 +225,10 @@ _install() {
 # }
 
 _rebuild_conf() {
+	if [ -z "$DOMAIN" ]; then
+		echo "DOMAIN missing"
+		exit 1
+	fi
 	_dir=$SITE_ROOT/data/zones
 	_file_ok=$SITE_ROOT/zones/$DOMAIN
 	_file=$(mktemp)
