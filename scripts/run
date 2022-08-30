@@ -182,11 +182,9 @@ _update_repos() {
 		exit 1
 	fi
 	_repo_private
-	_update_sources $REPOS_RUNTIME
-
 	_update_sources $REPOS_PRIVATE
+	_update_sources $REPOS_RUNTIME
 	_update_status=$?
-
 	return $_update_status
 }
 
