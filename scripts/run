@@ -312,6 +312,7 @@ _run() {
 	mkdir -p $SITE_ROOT/run
 	touch $SITE_ROOT/run/admin_state
 	_update
+	_rebuild_conf
 	$SITE_ROOT/start_server
 }
 
