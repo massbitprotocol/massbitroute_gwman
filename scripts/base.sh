@@ -74,7 +74,7 @@ _install_sources() {
 	_install_sources_status=0
 	for _pathgit in $@; do
 		# _repo
-		# _env
+		_env
 		_dir=$(echo $_pathgit | cut -d'|' -f1)
 		_url=$(echo $_pathgit | cut -d'|' -f2)
 		_branch=$(echo $_pathgit | cut -d'|' -f3)
@@ -85,15 +85,16 @@ _install_sources() {
 		if [ $_install_sources_status -eq 0 ]; then
 			_install_sources_status=$_st
 		fi
-		_env
+
 	done
 	return $_install_sources_status
 }
 _update_sources() {
 	_git_config
-	_env
+	# _env
 	_update_sources_status=0
 	for _pathgit in $@; do
+		_env
 		_dir=$(echo $_pathgit | cut -d'|' -f1)
 		# git config --global --add safe.directory $_path
 		_url=$(echo $_pathgit | cut -d'|' -f2)
@@ -105,7 +106,7 @@ _update_sources() {
 		if [ $_update_sources_status -eq 0 ]; then
 			_update_sources_status=$_st
 		fi
-		_env
+
 	done
 	return $_update_sources_status
 }
