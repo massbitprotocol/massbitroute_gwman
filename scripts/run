@@ -195,10 +195,16 @@ _update_repos() {
 		exit 1
 	fi
 
-	_repo_private
-	_update_status=0
-	_update_sources $REPOS_PRIVATE
+	_repo
+	_update_sources $REPOS
 	_update_status=$?
+
+	_repo_private
+	_update_sources $REPOS_PRIVATE
+	if [ $_update_status -eq 0 ]; then
+		_update_status=$?
+	fi
+
 	_update_sources $REPOS_RUNTIME
 	if [ $_update_status -eq 0 ]; then
 		_update_status=$?
