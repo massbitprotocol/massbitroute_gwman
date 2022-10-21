@@ -28,9 +28,7 @@ _repo() {
 	export ASDF_BRANCH=latest
 	export MKAGENT_BRANCH=latest
 	export GBC_BRANCH=latest
-	export NODE_BRANCH=latest
-	export GATEWAY_BRANCH=latest
-	export GWMAN_BRANCH=latest
+
 	REPOS="\
   $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$MKAGENT_BRANCH \
 	 $mbr_root/gbc|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc|$GBC_BRANCH \
