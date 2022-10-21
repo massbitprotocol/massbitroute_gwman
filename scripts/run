@@ -14,14 +14,29 @@ service_dir=$mbr_root/src/sites/services
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
-
+export GIT_PUBLIC_URL=https://github.com
 _repo() {
+
 	if [ -z "$MBR_ENV" ]; then
 		echo "MBR_ENV missing"
 		exit 1
 	fi
+	if [ -z "$GIT_PUBLIC_URL" ]; then
+		echo "GIT_PUBLIC_URL missing"
+		exit 1
+	fi
+	export ASDF_BRANCH=latest
+	export MKAGENT_BRANCH=latest
+	export GBC_BRANCH=latest
+	export NODE_BRANCH=latest
+	export GATEWAY_BRANCH=latest
+	export GWMAN_BRANCH=latest
+	REPOS="\
+  $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$MKAGENT_BRANCH \
+	 $mbr_root/gbc|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc|$GBC_BRANCH \
+	 $mbr_root/gbc/bin/.asdf|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf|$ASDF_BRANCH \
+"
 
-	REPOS=""
 }
 
 _repo_private() {
