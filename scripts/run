@@ -14,14 +14,28 @@ service_dir=$mbr_root/src/sites/services
 ASDF=/massbit/massbitroute/app/gbc/bin/.asdf
 GDNSD_VERSION=v3.8.0
 GDNSD_DIR=$ASDF/installs/gdnsd/$GDNSD_VERSION
-
+export GIT_PUBLIC_URL=https://github.com
 _repo() {
+
 	if [ -z "$MBR_ENV" ]; then
 		echo "MBR_ENV missing"
 		exit 1
 	fi
+	if [ -z "$GIT_PUBLIC_URL" ]; then
+		echo "GIT_PUBLIC_URL missing"
+		exit 1
+	fi
+	export ENV_BRANCH=${ENV_BRANCH:-$GIT_PRIVATE_BRANCH}
+	export ASDF_BRANCH=latest
+	export MKAGENT_BRANCH=latest
+	export GBC_BRANCH=latest
 
-	REPOS=""
+	REPOS="\
+  $service_dir/mkagent|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_mkagent.git|$MKAGENT_BRANCH \
+	 $mbr_root/gbc|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_gbc|$GBC_BRANCH \
+	 $mbr_root/gbc/bin/.asdf|$GIT_PUBLIC_URL/massbitprotocol/massbitroute_asdf|$ASDF_BRANCH \
+"
+
 }
 
 _repo_private() {
@@ -39,20 +53,20 @@ _repo_private() {
 		exit 1
 	fi
 
-	export MKAGENT_BRANCH=${MKAGENT_BRANCH:-$MBR_ENV}
+	# export MKAGENT_BRANCH=${MKAGENT_BRANCH:-$MBR_ENV}
 
-	export GBC_BRANCH=${GBC_BRANCH:-$MBR_ENV}
-	export ASDF_BRANCH=${ASDF_BRANCH:-$MBR_ENV}
-	export GWMAN_BRANCH=${GWMAN_BRANCH:-$MBR_ENV}
+	# export GBC_BRANCH=${GBC_BRANCH:-$MBR_ENV}
+	# export ASDF_BRANCH=${ASDF_BRANCH:-$MBR_ENV}
+	# export GWMAN_BRANCH=${GWMAN_BRANCH:-$MBR_ENV}
 
 	export ENV_BRANCH=${ENV_BRANCH:-$GIT_PRIVATE_BRANCH}
-	export SSL_BRANCH=${SSL_BRANCH:-$GIT_PRIVATE_BRANCH}
+	# export SSL_BRANCH=${SSL_BRANCH:-$GIT_PRIVATE_BRANCH}
 	export GWMANDEPLOY_BRANCH=${GWMANDEPLOY_BRANCH:-$GIT_PRIVATE_BRANCH}
-	export APIDEPLOY_BRANCH=${APIDEPLOY_BRANCH:-$GIT_PRIVATE_BRANCH}
+	# export APIDEPLOY_BRANCH=${APIDEPLOY_BRANCH:-$GIT_PRIVATE_BRANCH}
 
-	export NODE_BRANCH=${NODE_BRANCH:-$MBR_ENV}
-	export GATEWAY_BRANCH=${GATEWAY_BRANCH:-$MBR_ENV}
-	export API_BRANCH=${API_BRANCH:-$MBR_ENV}
+	# export NODE_BRANCH=${NODE_BRANCH:-$MBR_ENV}
+	# export GATEWAY_BRANCH=${GATEWAY_BRANCH:-$MBR_ENV}
+	# export API_BRANCH=${API_BRANCH:-$MBR_ENV}
 
 	_env
 
@@ -181,16 +195,22 @@ _update_repos() {
 		echo "Need GIT_PRIVATE_READ_URL"
 		exit 1
 	fi
-	
-	_repo_private
-	_update_status=0
-	_update_sources $REPOS_PRIVATE
+
+	_repo
+	_update_sources $REPOS
 	_update_status=$?
-	_update_sources $REPOS_RUNTIME
-	if [ $_update_status -eq 0 ];then
-	    _update_status=$?
+
+	_repo_private
+	_update_sources $REPOS_PRIVATE
+	if [ $_update_status -eq 0 ]; then
+		_update_status=$?
 	fi
-	
+
+	_update_sources $REPOS_RUNTIME
+	if [ $_update_status -eq 0 ]; then
+		_update_status=$?
+	fi
+
 	return $_update_status
 }
 
@@ -286,6 +306,32 @@ _reload() {
 	$SITE_ROOT/cmd_server start all
 }
 
+_update_tag() {
+	PORTAL_DOMAIN=portal.$DOMAIN
+	git="git -C $SITE_ROOT"
+	_v=$($git config --get remote.origin.url | awk -F'/' '{print $NF}')
+	tmp=$(mktemp)
+	curl -sfkL http://$PORTAL_DOMAIN/deploy/info/version/$_v >$tmp
+	if [ $? -ne 0 ]; then
+		rm $tmp
+		return 0
+	fi
+
+	_tag=$(cat $tmp)
+
+	rm $tmp
+	_my_tag=$($git describe --tags)
+	_tag_update=0
+	if [ "$_tag" != "$_my_tag" ]; then
+		$git fetch --all --tags --prune
+		$git checkout $_tag
+		_tag_update=1
+	fi
+
+	return $_tag_update
+
+}
+
 _update() {
 
 	echo "Update"
@@ -295,6 +341,12 @@ _update() {
 
 	_update_repos
 	_st_update=$?
+
+	_update_tag
+	if [ $_st_update -eq 0 ]; then
+		_st_update=$?
+	fi
+
 	# _commit_repos
 	return $_st_update
 }
